@@ -24,6 +24,10 @@ class App extends Component {
     }
   }
 
+  resetPage = () => {
+    this.setState({ pageNumber: 1 });
+  };
+
   handleChange = e => {
     this.setState({ InputValue: e.target.value });
   };
@@ -31,9 +35,9 @@ class App extends Component {
   handleSubmmit = evt => {
     evt.preventDefault();
     const { InputValue, pageNumber } = this.state;
-    GetPhoto(InputValue, pageNumber).then(data =>
-      this.setState({ photos: data.data.hits }),
-    );
+    GetPhoto(InputValue, pageNumber)
+      .then(data => this.setState({ photos: data.data.hits }))
+      .finally(() => this.resetPage());
   };
 
   // largeImageURL tags
