@@ -13,6 +13,8 @@ class App extends Component {
     modalOpen: false,
     largeImgP: '',
     tages: '',
+    stringSearch: '',
+    errorObj: null,
   };
 
   componentDidMount() {
@@ -34,10 +36,20 @@ class App extends Component {
 
   handleSubmmit = evt => {
     evt.preventDefault();
-    const { InputValue, pageNumber } = this.state;
-    GetPhoto(InputValue, pageNumber)
-      .then(data => this.setState({ photos: data.data.hits }))
-      .finally(() => this.resetPage());
+    const { InputValue } = this.state;
+    this.setState({ stringSearch: InputValue }, () => {
+      this.setState({ InputValue: '' });
+      const { stringSearch, pageNumber } = this.state;
+      GetPhoto(stringSearch, pageNumber)
+        .then(data =>
+          this.setState({
+            photos: [...data.data.hits],
+            errorObj: null,
+          }),
+        )
+        .catch(error => this.setState({ errorObj: error }))
+        .finally(this.resetPage());
+    });
   };
 
   // largeImageURL tags
@@ -45,9 +57,9 @@ class App extends Component {
     await this.setState(prevState => ({
       pageNumber: prevState.pageNumber + 1,
     }));
-    const { InputValue, pageNumber } = this.state;
+    const { stringSearch, pageNumber } = this.state;
 
-    await GetPhoto(InputValue, pageNumber).then(data =>
+    await GetPhoto(stringSearch, pageNumber).then(data =>
       this.setState(prevstate => ({
         photos: [...prevstate.photos, ...data.data.hits],
       })),
@@ -70,18 +82,30 @@ class App extends Component {
   };
 
   render() {
-    const { photos, modalOpen, largeImgP, tages } = this.state;
+    const {
+      photos,
+      modalOpen,
+      largeImgP,
+      tages,
+      InputValue,
+      errorObj,
+    } = this.state;
     return (
       <div className={style.app}>
         <SearchFrom
           onChange={this.handleChange}
           onSubmit={this.handleSubmmit}
+          InputValue={InputValue}
         />
-        <Gallery
-          photoClick={this.handleClick}
-          photos={photos}
-          loadFunc={this.loadFunc}
-        />
+        {errorObj || photos.length < 1 ? (
+          <p>No photo, try something else</p>
+        ) : (
+          <Gallery
+            photoClick={this.handleClick}
+            photos={photos}
+            loadFunc={this.loadFunc}
+          />
+        )}
         {modalOpen && (
           <Modal
             ButtonMethod={this.ButtonMethod}
